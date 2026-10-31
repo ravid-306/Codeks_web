@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global safety net - default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'sanjay1027817@gmail.com';
+    }
+
+    function isValidUser(data) {
+      return data.userId is string && data.userId.size() <= 128
+        && data.displayName is string && data.displayName.size() <= 100
+        && (!('email' in data) || (data.email is string && data.email.size() <= 256))
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 512))
+        && (!('streak' in data) || data.streak is number)
+        && (!('studyMinutes' in data) || data.studyMinutes is number)
+        && (!('completedChapters' in data) || data.completedChapters is list)
+        && (!('badges' in data) || data.badges is list);
+    }
+
+    function isValidCertificate(data) {
+      return data.certId is string && data.certId.size() <= 64
+        && data.userId is string && data.userId.size() <= 128
+        && data.learnerName is string && data.learnerName.size() <= 100
+        && data.languageId is string && data.languageId.size() <= 32
+        && data.languageName is string && data.languageName.size() <= 64
+        && data.issuedAt is string && data.issuedAt.size() <= 64;
+    }
+
+    function isValidSubmission(data) {
+      return data.submissionId is string && data.submissionId.size() <= 64
+        && data.userId is string && data.userId.size() <= 128
+        && data.learnerName is string && data.learnerName.size() <= 100
+        && data.githubUrl is string && data.githubUrl.size() <= 512
+        && data.title is string && data.title.size() <= 150;
+    }
+
+    // Users Collection - strict user ownership
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.auth.uid == userId 
+        && request.resource.data.userId == request.auth.uid
+        && isValidUser(request.resource.data);
+      allow update: if isSignedIn() && request.auth.uid == userId 
+        && request.resource.data.userId == existing().userId
+        && isValidUser(request.resource.data);
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Certificates Collection - Public read for verification, authenticated user create
+    match /certificates/{certId} {
+      allow get: if isValidId(certId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid
+        && isValidId(certId)
+        && isValidCertificate(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    // Project Submissions - Owner access and admin approval
+    match /projectSubmissions/{submissionId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid
+        && isValidId(submissionId)
+        && isValidSubmission(request.resource.data);
+      allow update: if isSignedIn() && (
+        (request.resource.data.userId == existing().userId && request.auth.uid == existing().userId) || isAdmin()
+      );
+      allow delete: if isSignedIn() && (request.auth.uid == existing().userId || isAdmin());
+    }
+  }
+}

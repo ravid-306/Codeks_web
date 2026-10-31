@@ -1,0 +1,72 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with study progress, streaks, and achievements",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "photoURL": { "type": "string", "maxLength": 512 },
+        "streak": { "type": "number" },
+        "lastActiveDate": { "type": "string", "maxLength": 32 },
+        "studyMinutes": { "type": "number" },
+        "completedChapters": { "type": "array" },
+        "badges": { "type": "array" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["userId", "displayName"]
+    },
+    "Certificate": {
+      "title": "Certificate",
+      "description": "Verifiable completion certificate for languages or master curriculum",
+      "type": "object",
+      "properties": {
+        "certId": { "type": "string", "maxLength": 64 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "learnerName": { "type": "string", "maxLength": 100 },
+        "languageId": { "type": "string", "maxLength": 32 },
+        "languageName": { "type": "string", "maxLength": 64 },
+        "issuedAt": { "type": "string", "maxLength": 64 },
+        "studyHours": { "type": "number" },
+        "score": { "type": "number" },
+        "verificationHash": { "type": "string", "maxLength": 128 },
+        "githubRepoUrl": { "type": "string", "maxLength": 512 }
+      },
+      "required": ["certId", "userId", "learnerName", "languageId", "languageName", "issuedAt"]
+    },
+    "ProjectSubmission": {
+      "title": "ProjectSubmission",
+      "description": "Public GitHub project repository submission for Master Certificate",
+      "type": "object",
+      "properties": {
+        "submissionId": { "type": "string", "maxLength": 64 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "learnerName": { "type": "string", "maxLength": 100 },
+        "languageId": { "type": "string", "maxLength": 32 },
+        "githubUrl": { "type": "string", "maxLength": 512 },
+        "title": { "type": "string", "maxLength": 150 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["pending", "approved"], "maxLength": 32 },
+        "submittedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["submissionId", "userId", "learnerName", "githubUrl", "title"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Learner progress and profile records"
+    },
+    "/certificates/{certId}": {
+      "schema": "Certificate",
+      "description": "Publicly verifiable course certificates"
+    },
+    "/projectSubmissions/{submissionId}": {
+      "schema": "ProjectSubmission",
+      "description": "Learner GitHub project submissions"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Codeks - Interactive Programming Academy",
+  "description": "Master 17 modern programming languages through 10-minute chapters, randomized quiz challenges, live sandboxed practice, Kodi the reactive mascot, and verifiable certificates.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
